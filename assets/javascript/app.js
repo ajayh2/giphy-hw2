@@ -1,0 +1,114 @@
+        // Initial array of movies
+        $(document).ready(function() {
+            var movies = [
+              "The Matrix",
+              "The Notebook",
+              "Mr. Nobody",
+              "The Lion King"
+            ];
+            // displayMovieInfo function re-renders the HTML to display the appropriate content
+            function displayMovieInfo() {
+              var movie = $(this).attr("movie-name");
+              var queryURL =
+                "http://api.giphy.com/v1/gifs/search?q=" +
+                movie +
+                "&api_key=dc6zaTOxFJmzC&limit=10";
+  
+              //use AJAX to GET information on movie button clicked
+  
+              $.ajax({
+                url: queryURL,
+                method: "GET"
+              }).done(function(response) {
+                //empty movies div so new selection appends to emtpy div - do not want previous searches listed
+  
+                $("#movies").empty();
+  
+                var results = response.data;
+  
+                //user for loop to grab the rating information and appropriate gif for button clicked into its own div to keep information together
+  
+                for (var i = 0; i < results.length; i++) {
+                  var movieDiv = $("<div class='usermovie'>");
+  
+                  //make variable for rating for clean appending
+  
+                  var rating = results[i].rating;
+                  var pRate = $("<p>").text("Rating: " + rating);
+  
+                  //make variables for still url and animated url for clean build
+  
+                  var urlStill = results[i].images.fixed_height_still.url;
+                  var urlPlay = results[i].images.fixed_height.url;
+  
+                  //gif needs still source to load, and data attributes to store the still and animated gifs for pausing function
+  
+                  var gif = $("<img>")
+                    .addClass("gif")
+                    .attr("src", urlStill)
+                    .attr("data-still", urlStill)
+                    .attr("data-animate", urlPlay)
+                    .attr("data-state", "still");
+  
+                  //append the gif and rating to the new div created during for loop
+  
+                  movieDiv.append(gif);
+                  movieDiv.append(pRate);
+  
+                  //append all for loop created divs to the DOM
+  
+                  $("#movies").append(movieDiv);
+                }
+  
+                //on click of gif still image, gif will play. When clicked again, gif will pause.
+  
+                $(".gif").on("click", function() {
+                  var state = $(this).attr("data-state");
+  
+                  if (state === "still") {
+                    $(this).attr("src", $(this).attr("data-animate"));
+                    $(this).attr("data-state", "animate");
+                  } else {
+                    $(this).attr("src", $(this).attr("data-still"));
+                    $(this).attr("data-state", "still");
+                  }
+                });
+              });
+            }
+            // Function for displaying movie data
+            function renderButtons() {
+              // Deleting the movies prior to adding new movies
+              // (this is necessary otherwise you will have repeat buttons)
+              $("#buttons-view").empty();
+              // Looping through the array of movies
+              for (var i = 0; i < movies.length; i++) {
+                // Then dynamicaly generating buttons for each movie in the array
+                // This code $("<button>") is all jQuery needs to create the beginning and end tag. (<button></button>)
+                var a = $("<button>");
+                // Adding a class of movie-btn to our button
+                a.addClass("movie-btn");
+                // Adding a data-attribute
+                a.attr("data-name", movies[i]);
+                // Providing the initial button text
+                a.text(movies[i]);
+                // Adding the button to the buttons-view div
+                $("#buttons-view").append(a);
+              }
+            }
+            // This function handles events where a movie button is clicked
+            $("#add-movie").on("click", function(event) {
+              event.preventDefault();
+              // This line grabs the input from the textbox
+              var movie = $("#movie-input")
+                .val()
+                .trim();
+              // Adding movie from the textbox to our array
+              movies.push(movie);
+              // Calling renderButtons which handles the processing of our movie array
+              renderButtons();
+            });
+            // Adding a click event listener to all elements with a class of "movie-btn"
+            $(document).on("click", ".movie-btn", displayMovieInfo);
+            // Calling the renderButtons function to display the intial buttons
+            renderButtons();
+          });
